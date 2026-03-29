@@ -88,11 +88,34 @@ class MotorsTests(unittest.TestCase):
         module = load_module_with(FakeSBC)
 
         with module.Motors() as motors:
+            motors.motor2.set_speed(50)
             motors.motor2.set_speed(0)
 
         calls = FakeSBC.instances[0].calls
         self.assertIn(("gpio_write", 100, 25, 0), calls)
         self.assertIn(("tx_pwm", 100, 13, 0, 0), calls)
+
+    def test_stop_is_safe_before_pwm_start(self):
+        module = load_module_with(FakeSBC)
+
+        with module.Motors() as motors:
+            motors.motor1.stop()
+            motors.motor2.set_speed(0)
+
+        calls = FakeSBC.instances[0].calls
+        self.assertNotIn(("tx_pwm", 100, 12, 0, 0), calls)
+        self.assertNotIn(("tx_pwm", 100, 13, 0, 0), calls)
+
+    def test_stop_is_idempotent_after_pwm_start(self):
+        module = load_module_with(FakeSBC)
+
+        with module.Motors() as motors:
+            motors.motor1.set_speed(25)
+            motors.motor1.stop()
+            motors.motor1.stop()
+
+        calls = FakeSBC.instances[0].calls
+        self.assertEqual(calls.count(("tx_pwm", 100, 12, 0, 0)), 1)
 
     def test_requires_rgpiod_connection(self):
         module = load_module_with(DisconnectedSBC)

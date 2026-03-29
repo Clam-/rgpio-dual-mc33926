@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dual_mc33926"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="", email="email@example.com" },
 ]
@@ -21,5 +21,5 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/Clam-/dual-mc33926"
-"Bug Tracker" = "https://github.com/Clam-/dual-mc33926/issues"
+"Homepage" = "https://github.com/Clam-/rgpio-dual-mc33926"
+"Bug Tracker" = "https://github.com/Clam-/rgpio-dual-mc33926/issues"

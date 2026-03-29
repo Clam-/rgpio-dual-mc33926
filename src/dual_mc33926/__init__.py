@@ -38,6 +38,7 @@ class Motor:
         self._gpiochip_handle = gpiochip_handle
         self.pins = pins
         self.pwm_frequency = pwm_frequency
+        self._pwm_active = False
 
     def enable(self) -> None:
         _check_status(
@@ -52,10 +53,14 @@ class Motor:
         )
 
     def stop(self) -> None:
+        if not self._pwm_active:
+            return
+
         _check_status(
             f"tx_pwm(gpio={self.pins.pwm})",
             self._sbc.tx_pwm(self._gpiochip_handle, self.pins.pwm, 0, 0),
         )
+        self._pwm_active = False
 
     def set_speed(self, speed: float) -> None:
         clamped_speed = max(-MAX_SPEED, min(MAX_SPEED, float(speed)))
@@ -80,6 +85,7 @@ class Motor:
                 duty_cycle,
             ),
         )
+        self._pwm_active = True
 
 
 class Motors:
