@@ -94,6 +94,25 @@ class MotorsTests(unittest.TestCase):
         calls = FakeSBC.instances[0].calls
         self.assertIn(("gpio_write", 100, 25, 0), calls)
         self.assertIn(("tx_pwm", 100, 13, 0, 0), calls)
+        stop_index = calls.index(("tx_pwm", 100, 13, 0, 0))
+        idle_direction_index = len(calls) - 1 - calls[::-1].index(
+            ("gpio_write", 100, 25, 0)
+        )
+        self.assertLess(stop_index, idle_direction_index)
+
+    def test_direction_change_stops_pwm_before_flipping_direction(self):
+        module = load_module_with(FakeSBC)
+
+        with module.Motors() as motors:
+            motors.motor1.set_speed(50)
+            motors.motor1.set_speed(-25)
+
+        calls = FakeSBC.instances[0].calls
+        stop_index = calls.index(("tx_pwm", 100, 12, 0, 0))
+        direction_index = calls.index(("gpio_write", 100, 24, 1))
+        restart_index = calls.index(("tx_pwm", 100, 12, module.DEFAULT_PWM_FREQUENCY, 25.0))
+        self.assertLess(stop_index, direction_index)
+        self.assertLess(direction_index, restart_index)
 
     def test_stop_is_safe_before_pwm_start(self):
         module = load_module_with(FakeSBC)

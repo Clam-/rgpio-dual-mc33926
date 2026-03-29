@@ -39,6 +39,14 @@ class Motor:
         self.pins = pins
         self.pwm_frequency = pwm_frequency
         self._pwm_active = False
+        self._direction = 0
+
+    def _write_direction(self, direction: int) -> None:
+        _check_status(
+            f"gpio_write(direction={self.pins.direction})",
+            self._sbc.gpio_write(self._gpiochip_handle, self.pins.direction, direction),
+        )
+        self._direction = direction
 
     def enable(self) -> None:
         _check_status(
@@ -67,14 +75,16 @@ class Motor:
         direction = 1 if clamped_speed < 0 else 0
         duty_cycle = abs(clamped_speed)
 
-        _check_status(
-            f"gpio_write(direction={self.pins.direction})",
-            self._sbc.gpio_write(self._gpiochip_handle, self.pins.direction, direction),
-        )
-
         if duty_cycle == 0:
             self.stop()
+            self._write_direction(direction)
             return
+
+        if self._pwm_active and direction != self._direction:
+            self.stop()
+
+        if not self._pwm_active or direction != self._direction:
+            self._write_direction(direction)
 
         _check_status(
             f"tx_pwm(gpio={self.pins.pwm})",
